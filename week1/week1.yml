@@ -1,0 +1,80 @@
+Description: A template for creating EC2 instance with security group configured with ssh and http access
+
+Parameters:
+  InstanceType:
+    Description: EC2 instance configuration
+    Type: String
+    Default: t2.micro
+
+  ImageId:
+    Description: EC2 instance configuration
+    Type: String
+    Default: ami-013a129d325529d4d
+
+  KeyName:
+    Description: Key Name for EC2 instance
+    Type: String
+    Default: aws-tymanova-us-west-2
+  
+  JavaSdk:
+    Description: Java SDK to install
+    Type: String
+    Default: java-1.8.0-openjdk
+  
+  AvailabilityZone:
+    Description: Availability Zone for EC2 instance
+    Type: CommaDelimitedList
+    Default: us-west-2a,us-west-2b,us-west-2c
+
+Resources:
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: Autoscaling Group
+      LaunchTemplate:
+        LaunchTemplateId: !Ref myLaunchTemplate
+        Version: !GetAtt myLaunchTemplate.LatestVersionNumber
+      MinSize: 2
+      MaxSize: 4
+      AvailabilityZones: !Ref AvailabilityZone
+
+  myLaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName: launch-template-for-auto-scaling
+      LaunchTemplateData:
+        KeyName: !Ref KeyName
+        ImageId: 
+          Ref: ImageId
+        InstanceType:
+          Ref: InstanceType
+        SecurityGroups:
+          - !Ref SSHSecurityGroup
+          - !Ref HTTPSecurityGroup
+        UserData: 
+          Fn::Base64:
+            !Sub |
+              #!/bin/bash -xe
+              yum -y install ${JavaSdk}
+
+  SSHSecurityGroup:
+    Description: Security group configured for ssh access
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for EC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  HTTPSecurityGroup:
+    Description: Security group configured for http access
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for EC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
