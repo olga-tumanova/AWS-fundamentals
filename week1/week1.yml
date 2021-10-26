@@ -1,4 +1,4 @@
-Description: A template for creating EC2 instance with security group configured with ssh and http access
+Description: A template for creating Auto Scaling Group with at least two EC2 instances with preinstalled Java 8
 
 Parameters:
   InstanceType:
